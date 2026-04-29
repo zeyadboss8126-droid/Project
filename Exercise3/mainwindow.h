@@ -8,6 +8,9 @@
 #include "ModelPart.h"
 
 #include <vtkSmartPointer.h>
+#include "VRRenderThread.h"
+
+
 
 class vtkGenericOpenGLRenderWindow;
 class vtkRenderer;
@@ -43,6 +46,7 @@ private:
     ModelPartList* partList = nullptr;
 
     QVTKOpenGLNativeWidget* vtkWidget = nullptr;
+    VRRenderThread* vrThread = nullptr;
 
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;

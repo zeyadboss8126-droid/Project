@@ -7,6 +7,9 @@
 #include <vtkOpenVRRenderer.h>
 #include <vtkOpenVRRenderWindow.h>
 #include <vtkOpenVRRenderWindowInteractor.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkPolyData.h>
+#include <vtkProperty.h>
 
 // ── Qt-VTK bridge + standard VTK rendering headers ──
 #include <QVTKOpenGLNativeWidget.h>
@@ -225,49 +228,66 @@ void MainWindow::updateRenderFromTree(const QModelIndex& index)
 
 void MainWindow::on_ButtonVR_clicked()
 {
-    QMessageBox::information(this, "VR",
-        "Start SteamVR and connect the headset before using real VR.");
+    if (vrThread && vrThread->isRunning())
+        return;
 
-    vtkSmartPointer<vtkOpenVRRenderer> vrRenderer =
-        vtkSmartPointer<vtkOpenVRRenderer>::New();
-
-    vtkSmartPointer<vtkOpenVRRenderWindow> vrWindow =
-        vtkSmartPointer<vtkOpenVRRenderWindow>::New();
-
-    vtkSmartPointer<vtkOpenVRRenderWindowInteractor> vrInteractor =
-        vtkSmartPointer<vtkOpenVRRenderWindowInteractor>::New();
-
-    vrWindow->AddRenderer(vrRenderer);
-    vrInteractor->SetRenderWindow(vrWindow);
-
-    vrRenderer->SetBackground(0.1, 0.1, 0.2);
+    vrThread = new VRRenderThread(this);
 
     std::function<void(const QModelIndex&)> addActors =
         [&](const QModelIndex& index)
         {
-            if (!index.isValid()) return;
+            if (!index.isValid())
+                return;
 
             ModelPart* part = static_cast<ModelPart*>(index.internalPointer());
 
-            if (part && part->visible() && part->getActor()) {
-                vtkSmartPointer<vtkActor> copiedActor =
-                    vtkSmartPointer<vtkActor>::New();
+            if (part && part->visible() && part->getActor())
+            {
+                vtkActor* originalActor = part->getActor();
 
-                copiedActor->ShallowCopy(part->getActor());
-                vrRenderer->AddActor(copiedActor);
+                vtkPolyDataMapper* originalMapper =
+                    vtkPolyDataMapper::SafeDownCast(originalActor->GetMapper());
+
+                if (originalMapper)
+                {
+                    // 🔥 IMPORTANT: force update to get real data
+                    originalMapper->Update();
+
+                    vtkPolyData* polyData = originalMapper->GetInput();
+
+                    if (polyData)
+                    {
+                        vtkSmartPointer<vtkPolyData> copiedPolyData =
+                            vtkSmartPointer<vtkPolyData>::New();
+
+                        copiedPolyData->DeepCopy(polyData);
+
+                        vtkSmartPointer<vtkPolyDataMapper> copiedMapper =
+                            vtkSmartPointer<vtkPolyDataMapper>::New();
+
+                        copiedMapper->SetInputData(copiedPolyData);
+
+                        vtkSmartPointer<vtkActor> copiedActor =
+                            vtkSmartPointer<vtkActor>::New();
+
+                        copiedActor->SetMapper(copiedMapper);
+                        copiedActor->GetProperty()->DeepCopy(originalActor->GetProperty());
+
+                        // 🔥 scale for VR
+                        copiedActor->SetScale(0.1, 0.1, 0.1);
+
+                        vrThread->addActorOffline(copiedActor);
+                    }
+                }
             }
-
             int rows = partList->rowCount(index);
             for (int i = 0; i < rows; ++i)
                 addActors(partList->index(i, 0, index));
         };
 
-    int topRows = partList->rowCount(QModelIndex());
-    for (int i = 0; i < topRows; ++i)
+    int rows = partList->rowCount(QModelIndex());
+    for (int i = 0; i < rows; ++i)
         addActors(partList->index(i, 0, QModelIndex()));
 
-    vrRenderer->ResetCamera();
-    vrWindow->Render();
-    vrInteractor->Start();
+    vrThread->start();
 }
-//ggooooo

@@ -11,12 +11,13 @@ qt_standard_project_setup()
 set(VTK_DIR "C:/Program Files (x86)/VTK/lib/cmake/vtk-9.6")
 
 # OpenVR - required by VTK RenderingOpenVR
-set(OpenVR_INCLUDE_DIR "C:/OpenVR/headers" CACHE PATH "OpenVR include directory" FORCE)
-set(OpenVR_LIBRARY "C:/OpenVR/lib/win64/openvr_api.lib" CACHE FILEPATH "OpenVR library" FORCE)
-set(OpenVR_BIN_DIR "C:/OpenVR/bin/win64" CACHE PATH "OpenVR bin directory" FORCE)
+set(OpenVR_INCLUDE_DIR "D:/OpenVR/headers" CACHE PATH "OpenVR include directory" FORCE)
+set(OpenVR_LIBRARY "d:/OpenVR/lib/win64/openvr_api.lib" CACHE FILEPATH "OpenVR library" FORCE)
+set(OpenVR_BIN_DIR "D:/OpenVR/bin/win64" CACHE PATH "OpenVR bin directory" FORCE)
 
 
 find_package(VTK REQUIRED COMPONENTS
+CommonColor
   CommonCore
   CommonDataModel
   FiltersSources
@@ -45,6 +46,8 @@ qt_add_executable(Worksheet6
   optiondialog.h
   optiondialog.ui
   resources.qrc
+  VRRenderThread.cpp
+VRRenderThread.h
 )
 
 target_link_libraries(Worksheet6 PRIVATE
