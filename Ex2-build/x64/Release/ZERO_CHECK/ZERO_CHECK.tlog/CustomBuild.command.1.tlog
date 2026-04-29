@@ -1,0 +1,10 @@
+^C:\USERS\ZEYAD\GIT\2025_20678032\WORKSHEET7\EX2-BUILD\CMAKEFILES\2E6545E0A7EF2ECC429297DCCBBC10BB\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zeyad/git/2025_20678032/Worksheet7/Exercise2 -BC:/Users/zeyad/git/2025_20678032/Worksheet7/Ex2-build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/zeyad/git/2025_20678032/Worksheet7/Ex2-build/vtkexample_vr1.slnx
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
